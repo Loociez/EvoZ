@@ -53,7 +53,19 @@ const player = {
 
 // ---------------- Enemies ----------------
 const enemies = [];
+const ELITE_CHANCE = 0.12;
+
+const eliteModifiers = [
+    { name: 'fast', speedMult: 1.6, color: '#ffffff', xpMult: 2 },
+    { name: 'tank', sizeMult: 1.8, speedMult: 0.7, xpMult: 3 },
+    { name: 'exploder', explodeOnDeath: true, xpMult: 2.5 }
+];
+
+let boss = null;
+let lastBossLevel = 0;
 const enemyTypes = [
+
+
     { color:'#ff0000', baseSize:4, speed:1.5, xp:5, type:'basic' },
     { color:'#ff8800', baseSize:6, speed:1, xp:10, type:'slow' },
     { color:'#ff00ff', baseSize:3, speed:2, xp:7, type:'fast' },
@@ -201,7 +213,14 @@ function spawnEnemy() {
     } while(Math.hypot(x - player.x, y - player.y) < 200);
 
     const growthFactor = Math.floor(player.actualSize/10); // enemies grow with player
+    
+    const isElite = Math.random() < ELITE_CHANCE;
+    let elite = null;
+    if(isElite) elite = eliteModifiers[Math.floor(Math.random()*eliteModifiers.length)];
     enemies.push({
+        isElite,
+        elite,
+
         x, y,
         size: type.baseSize + growthFactor,
         speed: type.speed,
@@ -267,6 +286,20 @@ updateCamera();
         b.life -= 16;
         if(b.life <= 0){ player.bullets.splice(i,1); continue; }
 
+        
+        if(boss){
+            const db = Math.hypot(b.x - boss.x, b.y - boss.y);
+            if(db < b.size + boss.size){
+                boss.hp -= 20;
+                player.bullets.splice(i,1);
+                if(boss.hp <= 0){
+                    player.xp += 200;
+                    boss = null;
+                }
+                break;
+            }
+        }
+
         // Bullet-enemy collision
         for(let j=enemies.length-1;j>=0;j--){
             const e = enemies[j];
@@ -294,7 +327,8 @@ updateCamera();
         e.pulse += 0.05;
         e.size = (enemyTypes.find(t=>t.type===e.type).baseSize + growthFactor); // scale enemies
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        e.x += Math.cos(angle)*e.speed;
+        const sm = e.isElite && e.elite?.speedMult ? e.elite.speedMult : 1;
+        e.x += Math.cos(angle)*e.speed*sm;
         e.y += Math.sin(angle)*e.speed;
 
         if(e.type==='shooter'){
@@ -313,7 +347,19 @@ updateCamera();
         }
     }
 
-    // Spawn enemies
+    
+    if(boss){
+        boss.pulse += 0.03;
+        const a = Math.atan2(player.y - boss.y, player.x - boss.x);
+        boss.x += Math.cos(a) * boss.speed;
+        boss.y += Math.sin(a) * boss.speed;
+        if(now - boss.lastShot > boss.shootRate){
+            boss.lastShot = now;
+            player.bullets.push({x:boss.x,y:boss.y,dx:Math.cos(a)*6,dy:Math.sin(a)*6,size:6,color:'#ff6666',life:4000});
+        }
+    }
+
+// Spawn enemies
     if(Math.random()<0.03) spawnEnemy();
 
     // Skills XP
@@ -326,6 +372,12 @@ updateCamera();
 
     // Every 10 levels: reset visual player size and background
     const newStage = Math.floor(player.level / 10);
+
+    if(player.level % 10 === 0 && player.level !== lastBossLevel){
+        spawnBoss();
+        lastBossLevel = player.level;
+    }
+
 if(newStage > powerStage){
     powerStage = newStage;
     lastPowerStage = player.level;
@@ -453,7 +505,20 @@ if(powerStage >= 2){
         ctx.shadowBlur = 0;
     });
 
-   // Enemies
+   
+    if(boss){
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, boss.size + Math.sin(boss.pulse)*4, 0, Math.PI*2);
+        ctx.fillStyle = boss.color;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = boss.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'red';
+        ctx.fillRect(boss.x - 40, boss.y - boss.size - 20, 80*(boss.hp/boss.maxHp), 6);
+    }
+
+    // Enemies
 enemies.forEach(e=>{
     const enemyPulse = e.size + Math.sin(e.pulse)*1.2;
 
@@ -597,3 +662,19 @@ updateUI();
 draw();
 gameLoop();
 fetchLeaderboard();
+
+
+function spawnBoss(){
+    boss = {
+        x: player.x + 300,
+        y: player.y,
+        size: 40 + player.level * 2,
+        hp: 500 + player.level * 100,
+        maxHp: 500 + player.level * 100,
+        speed: 0.8,
+        pulse: 0,
+        color: '#ff4444',
+        lastShot: 0,
+        shootRate: 1200
+    };
+}
