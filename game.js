@@ -276,10 +276,12 @@ function update() {
     if(gameOver) return;
 
 // Player movement
-if(keys['w'] || keys['ArrowUp']) player.y -= player.speed;
-if(keys['s'] || keys['ArrowDown']) player.y += player.speed;
-if(keys['a'] || keys['ArrowLeft']) player.x -= player.speed;
-if(keys['d'] || keys['ArrowRight']) player.x += player.speed;
+// Player movement (WASD ONLY)
+if (keys['w']) player.y -= player.speed;
+if (keys['s']) player.y += player.speed;
+if (keys['a']) player.x -= player.speed;
+if (keys['d']) player.x += player.speed;
+
 
     player.pulse += 0.05;
 	
