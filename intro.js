@@ -163,7 +163,7 @@
     creditsPanel.id = "evoz-credits-panel";
     creditsPanel.innerHTML = `
         <p>Game created by <strong>Loocie</strong></p>
-        <p>Music: <strong>n3x - Anything</strong></p>
+        <p>Music: <strong>N3x - Anything</strong></p>
         <button class="evoz-btn" id="evoz-back">BACK</button>
     `;
 
