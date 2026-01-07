@@ -22,8 +22,8 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // --------- WORLD SIZE ---------
-const WORLD_WIDTH = 600;  // total map width
-const WORLD_HEIGHT = 600; // total map height
+const WORLD_WIDTH = 1600;  // total map width
+const WORLD_HEIGHT = 1600; // total map height
 
 
 // ---------------- Player ----------------
@@ -165,7 +165,10 @@ document.addEventListener('keydown', e => {
 document.addEventListener('keyup', e => keys[e.key] = false);
 
 let mouse = { x: canvas.width/2, y: canvas.height/2 };
-canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+canvas.addEventListener('mousemove', e => {
+    mouse.x = (e.clientX / camera.zoom) + camera.x;
+    mouse.y = (e.clientY / camera.zoom) + camera.y;
+});
 canvas.addEventListener('mousedown', shootBullet);
 
 // ---------------- Bullets ----------------
@@ -175,7 +178,7 @@ function shootBullet() {
     if (now - player.lastShot < player.fireRate) return;
     player.lastShot = now;
 
-    const angle = Math.atan2(mouse.y - canvas.height/2, mouse.x - canvas.width/2);
+    const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
     player.bullets.push({
         x: player.x,
         y: player.y,
@@ -340,8 +343,8 @@ if(newStage > powerStage){
 function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.save();
-ctx.translate(-camera.x, -camera.y);
 ctx.scale(camera.zoom, camera.zoom);
+ctx.translate(-camera.x, -camera.y);
 
 
     // Grid
