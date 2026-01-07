@@ -25,7 +25,7 @@
         padding: 10px;
         border-radius: 8px;
         pointer-events: none;
-        display: none; /* hidden until game starts */
+        display: none;
     }
 
     #stats p {
@@ -64,7 +64,7 @@
         border-radius: 8px;
         max-height: 80vh;
         overflow-y: auto;
-        display: none; /* hidden until game starts */
+        display: none;
     }
 
     #leaderboard h3 {
@@ -83,6 +83,19 @@
     canvas {
         display: block;
     }
+
+    /* ===== Music Button ===== */
+    #musicToggle {
+        margin-top: 8px;
+        padding: 4px 8px;
+        background: #111;
+        color: #0ff;
+        border: 1px solid #0ff;
+        border-radius: 4px;
+        cursor: pointer;
+        pointer-events: auto;
+        font-size: 12px;
+    }
 </style>
 </head>
 
@@ -100,6 +113,9 @@
         <p>Skills:</p>
         <div id="skillButtons"></div>
     </div>
+
+    <!-- Music Toggle -->
+    <button id="musicToggle">🔊 Music On</button>
 </div>
 
 <!-- ================= Leaderboard ================= -->
@@ -113,14 +129,36 @@
 <!-- ================= Intro ================= -->
 <script src="intro.js"></script>
 
-<!-- ================= Game Loader ================= -->
+<!-- ================= Game + Music Loader ================= -->
 <script>
+    let bgMusic;
+    let musicEnabled = true;
+
     document.addEventListener("evoz-start-game", () => {
-        // Show UI now that game is starting
+        // Show UI
         document.getElementById("ui").style.display = "block";
         document.getElementById("leaderboard").style.display = "block";
 
-        // Dynamically load the game module
+        // Start background music (user interaction safe)
+        bgMusic = new Audio("Sounds/Anything.mp3");
+        bgMusic.loop = true;
+        bgMusic.volume = 0.5;
+        bgMusic.play();
+
+        // Music toggle button
+        const btn = document.getElementById("musicToggle");
+        btn.onclick = () => {
+            musicEnabled = !musicEnabled;
+            if (musicEnabled) {
+                bgMusic.play();
+                btn.textContent = "🔊 Music On";
+            } else {
+                bgMusic.pause();
+                btn.textContent = "🔇 Music Off";
+            }
+        };
+
+        // Load the game AFTER play
         const script = document.createElement("script");
         script.type = "module";
         script.src = "game.js";
