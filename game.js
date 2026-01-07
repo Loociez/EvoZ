@@ -198,9 +198,11 @@ function shootBullet() {
         dy: Math.sin(angle) * 7,
         size: 4,
         life: 3000,
-        color: '#fff'
+        color: '#fff',
+        owner: 'player' // ✅ ADD THIS
     });
 }
+
 
 // ---------------- Enemy Spawning ----------------
 function spawnEnemy() {
@@ -218,20 +220,24 @@ function spawnEnemy() {
     let elite = null;
     if(isElite) elite = eliteModifiers[Math.floor(Math.random()*eliteModifiers.length)];
     enemies.push({
-        isElite,
-        elite,
+    isElite,
+    elite,
 
-        x, y,
-        size: type.baseSize + growthFactor,
-        speed: type.speed,
-        color: type.color,
-        type: type.type,
-        xp:type.xp,
-        shootRate: type.shootRate || 0,
-        lastShot: 0,
-        shield: type.shield || false,
-        pulse: Math.random()*Math.PI*2
-    });
+    x,
+    y,
+    size: type.baseSize + growthFactor,
+    speed: type.speed,
+    color: type.color,
+    type: type.type,
+    xp: type.xp,
+    shootRate: type.shootRate || 0,
+    lastShot: 0,
+    shield: type.shield || false,
+    pulse: Math.random() * Math.PI * 2,
+
+    killedByPlayer: false // ✅ IMPORTANT
+});
+
 }
 
 // ---------------- Explosion Helper ----------------
@@ -318,31 +324,25 @@ updateCamera();
     const e = enemies[j];
     const dist = Math.hypot(b.x - e.x, b.y - e.y);
 
-    if (b.owner !== 'enemy' && dist < b.size + e.size && !e.killedByPlayer) {
-        e.killedByPlayer = true; // mark as player-killed
-        player.xp += e.xp;
+   if (b.owner === 'player' && dist < b.size + e.size) {
+    player.xp += e.xp;
 
-        // Level up logic
-        const requiredXP = player.level * 10;
-        while (player.xp >= requiredXP) {
-            player.xp -= requiredXP;
-            player.skillPoints++;
-            player.level++;
-        }
-
-        // Optional visual growth
-        const growthFactor = 0;
-        player.actualSize += growthFactor;
-
-        updateUI();
-
-        if (player.explosion) createExplosion(e.x, e.y, e.size * 2);
-        if (player.heal) createHealEffect();
-
-        enemies.splice(j, 1);
-        player.bullets.splice(i, 1);
-        break;
+    const requiredXP = player.level * 10;
+    while (player.xp >= requiredXP) {
+        player.xp -= requiredXP;
+        player.skillPoints++;
+        player.level++;
     }
+
+    updateUI();
+
+    if (player.explosion) createExplosion(e.x, e.y, e.size * 2);
+    if (player.heal) createHealEffect();
+
+    enemies.splice(j, 1);
+    player.bullets.splice(i, 1);
+    break;
+}
 }
 
 
