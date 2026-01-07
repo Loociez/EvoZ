@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EvoZ</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: #000;
+        color: #fff;
+    }
+    #ui {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        background: rgba(0,0,0,0.4);
+        padding: 10px;
+        border-radius: 8px;
+    }
+    #stats p {
+        margin: 5px 0;
+    }
+    #skills {
+        margin-top: 10px;
+    }
+    #skillButtons button {
+        display: block;
+        margin: 3px 0;
+        padding: 4px 8px;
+        background: #111;
+        color: #0f0;
+        border: 1px solid #0f0;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    #skillButtons button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    #leaderboard {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        width: 250px;
+        background: rgba(0,0,0,0.4);
+        padding: 10px;
+        border-radius: 8px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    #leaderboard h3 {
+        margin-top: 0;
+        text-align: center;
+        color: #0ff;
+    }
+    #leaderboard div {
+        margin: 3px 0;
+        font-size: 14px;
+        border-bottom: 1px dotted #0ff;
+        padding-bottom: 2px;
+    }
+    canvas {
+        display: block;
+    }
+</style>
+</head>
+<body>
+<div id="ui">
+    <div id="stats">
+        <p>Size: <span id="size">10</span></p>
+        <p>XP: <span id="xp">0</span></p>
+        <p>Level: <span id="level">1</span></p>
+    </div>
+    <div id="skills">
+        <p>Skills:</p>
+        <div id="skillButtons"></div>
+    </div>
+</div>
+
+<div id="leaderboard">
+    <h3>Leaderboard</h3>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- Main Game Script -->
+<script type="module" src="game.js"></script>
+</body>
+</html>
