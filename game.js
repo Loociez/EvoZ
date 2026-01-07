@@ -33,15 +33,15 @@ const player = {
     size: 5,
        // visual size
     actualSize: 5, // growth tracker
-    minSize: 3,
+    minSize: 5,
     baseColor: '#00ff00',
     color: '#00ff00',
-    speed: 3,
+    speed: 2,
     xp: 0,
     level: 1,
     skillPoints: 0,
     bullets: [],
-    fireRate: 500,
+    fireRate: 750,
     lastShot: 0,
     shield: false,
     pulse: 0,
@@ -235,17 +235,30 @@ function spawnEnemy() {
 }
 
 // ---------------- Explosion Helper ----------------
-function createExplosion(x, y, size){
-    explosions.push({x,y,size,life:300});
-    for(let i = enemies.length-1; i>=0; i--){
+function createExplosion(x, y, size) {
+    explosions.push({ x, y, size, life: 300 });
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
         const e = enemies[i];
         const dist = Math.hypot(e.x - x, e.y - y);
-        if(dist <= size * 1.2){
+
+        if (dist <= size * 1.2 && !e.killedByPlayer) {
+            // Only award XP if player caused explosion
+            e.killedByPlayer = true;
             player.xp += e.xp;
-            enemies.splice(i,1);
+
+            const requiredXP = player.level * 10;
+            while (player.xp >= requiredXP) {
+                player.xp -= requiredXP;
+                player.skillPoints++;
+                player.level++;
+            }
+
+            enemies.splice(i, 1);
         }
     }
 }
+
 
 // ---------------- Heal Visual Helper ----------------
 function createHealEffect(){
@@ -301,51 +314,79 @@ updateCamera();
         }
 
         // Bullet-enemy collision
-        for(let j=enemies.length-1;j>=0;j--){
-            const e = enemies[j];
-            const dist = Math.hypot(b.x - e.x, b.y - e.y);
-            if(dist < b.size + e.size){
-                player.xp += e.xp;
-                player.actualSize += 0.5; // internal growth
-                player.level = Math.floor(player.actualSize/10)+1;
-                updateUI();
-                enemies.splice(j,1);
+        for (let j = enemies.length - 1; j >= 0; j--) {
+    const e = enemies[j];
+    const dist = Math.hypot(b.x - e.x, b.y - e.y);
 
-                if(player.explosion) createExplosion(e.x, e.y, e.size*2);
-                if(player.heal) createHealEffect();
+    if (dist < b.size + e.size && !e.killedByPlayer) {
+        e.killedByPlayer = true; // mark as player-killed
+        player.xp += e.xp;
 
-                player.bullets.splice(i,1);
-                break;
-            }
+        // Level up logic
+        const requiredXP = player.level * 10;
+        while (player.xp >= requiredXP) {
+            player.xp -= requiredXP;
+            player.skillPoints++;
+            player.level++;
+        }
+
+        // Optional visual growth
+        const growthFactor = 0;
+        player.actualSize += growthFactor;
+
+        updateUI();
+
+        if (player.explosion) createExplosion(e.x, e.y, e.size * 2);
+        if (player.heal) createHealEffect();
+
+        enemies.splice(j, 1);
+        player.bullets.splice(i, 1);
+        break;
+    }
+}
+
+
+    }
+
+    // ---------------- Update enemies ----------------
+for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    e.pulse += 0.05;
+
+    // Freeze visual growth
+    const scaleFactor = 0;
+    e.size = enemyTypes.find(t => t.type === e.type).baseSize + scaleFactor;
+
+    // Move enemy
+    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+    const sm = e.isElite && e.elite?.speedMult ? e.elite.speedMult : 1;
+    e.x += Math.cos(angle) * e.speed * sm;
+    e.y += Math.sin(angle) * e.speed;
+
+    // Shooter behavior
+    if (e.type === 'shooter') {
+        if (Date.now() - e.lastShot > e.shootRate) {
+            e.lastShot = Date.now();
+            const a = Math.atan2(player.y - e.y, player.x - e.x);
+            player.bullets.push({ x: e.x, y: e.y, dx: Math.cos(a) * 5, dy: Math.sin(a) * 5, size: 3, color: e.color, life: 3000 });
         }
     }
 
-    // Update enemies
-    const growthFactor = Math.floor(player.actualSize/10);
-    for(let i = enemies.length-1; i>=0; i--){
-        const e = enemies[i];
-        e.pulse += 0.05;
-        e.size = (enemyTypes.find(t=>t.type===e.type).baseSize + growthFactor); // scale enemies
-        const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        const sm = e.isElite && e.elite?.speedMult ? e.elite.speedMult : 1;
-        e.x += Math.cos(angle)*e.speed*sm;
-        e.y += Math.sin(angle)*e.speed;
-
-        if(e.type==='shooter'){
-            if(now - e.lastShot > e.shootRate){
-                e.lastShot = now;
-                const angle = Math.atan2(player.y - e.y, player.x - e.x);
-                player.bullets.push({x:e.x,y:e.y,dx:Math.cos(angle)*5,dy:Math.sin(angle)*5,size:3,color:e.color,life:3000});
-            }
-        }
-
-        // Player collision
-        const distPlayer = Math.hypot(player.x - e.x, player.y - e.y);
-        if(distPlayer < player.size + e.size){
-            player.size -= 1;
-            if(player.size <= player.minSize) endGame();
-        }
+    // Player collision
+    const distPlayer = Math.hypot(player.x - e.x, player.y - e.y);
+    if (distPlayer < player.size + e.size) {
+        player.size -= 1;
+        if (player.size <= player.minSize) endGame();
     }
+
+    // Remove enemies that leave the world WITHOUT giving XP
+    if (e.x < 0 || e.x > WORLD_WIDTH || e.y < 0 || e.y > WORLD_HEIGHT) {
+        enemies.splice(i, 1); // XP is never awarded here
+        continue; // skip further logic for this enemy
+    }
+}
+
+
 
     
     if(boss){
