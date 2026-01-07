@@ -318,7 +318,7 @@ updateCamera();
     const e = enemies[j];
     const dist = Math.hypot(b.x - e.x, b.y - e.y);
 
-    if (dist < b.size + e.size && !e.killedByPlayer) {
+    if (b.owner !== 'enemy' && dist < b.size + e.size && !e.killedByPlayer) {
         e.killedByPlayer = true; // mark as player-killed
         player.xp += e.xp;
 
@@ -368,7 +368,17 @@ for (let i = enemies.length - 1; i >= 0; i--) {
         if (Date.now() - e.lastShot > e.shootRate) {
             e.lastShot = Date.now();
             const a = Math.atan2(player.y - e.y, player.x - e.x);
-            player.bullets.push({ x: e.x, y: e.y, dx: Math.cos(a) * 5, dy: Math.sin(a) * 5, size: 3, color: e.color, life: 3000 });
+            player.bullets.push({
+    x: e.x,
+    y: e.y,
+    dx: Math.cos(a) * 5,
+    dy: Math.sin(a) * 5,
+    size: 3,
+    color: e.color,
+    life: 3000,
+    owner: 'enemy'
+});
+
         }
     }
 
@@ -402,14 +412,6 @@ for (let i = enemies.length - 1; i >= 0; i--) {
 
 // Spawn enemies
     if(Math.random()<0.03) spawnEnemy();
-
-    // Skills XP
-    const requiredXP = player.level*10;
-    if(player.xp>=requiredXP){
-        player.xp-=requiredXP;
-        player.skillPoints++;
-        updateUI();
-    }
 
     // Every 10 levels: reset visual player size and background
     const newStage = Math.floor(player.level / 10);
