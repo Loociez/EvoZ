@@ -1,5 +1,5 @@
 // ===============================
-// EvoZ Intro Screen (Animated Nebula + Stars + Neon Title + Buttons with Intro Sequence)
+// EvoZ Intro Screen (Enhanced Neon with Animated Nebula Background)
 // ===============================
 
 (function () {
@@ -20,7 +20,6 @@
       z-index: 9999;
       animation: introFadeIn 1s ease forwards;
       user-select: none;
-      color: #00ffcc;
     }
 
     canvas#nebula-canvas {
@@ -31,8 +30,10 @@
       z-index: 0;
       pointer-events: none;
       background: #000;
-      display: block;
     }
+
+    /* ===== STAR / BLOB LAYERS (Nebula blobs) ===== */
+    /* no direct styles for blobs since they're drawn on canvas */
 
     /* ===== TITLE ===== */
     #evoz-title {
@@ -42,16 +43,16 @@
       letter-spacing: 8px;
       color: #00ffcc;
       position: relative;
-      opacity: 0;
       transform: translateY(-220%);
-      animation-fill-mode: forwards;
+      animation:
+          titleDrop 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards,
+          neonPulse 3s ease-in-out infinite;
       text-shadow:
           0 0 10px #00ffcc,
           0 0 25px #00ffcc,
           0 0 60px rgba(0,255,204,0.9);
       z-index: 2;
       margin-bottom: 24px;
-      user-select: none;
     }
 
     /* Glitch overlay */
@@ -63,7 +64,6 @@
       top: 0;
       opacity: 0.4;
       mix-blend-mode: screen;
-      user-select: none;
     }
 
     #evoz-title::before {
@@ -85,10 +85,7 @@
     }
 
     @keyframes titleDrop {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      to { transform: translateY(0); }
     }
 
     @keyframes neonPulse {
@@ -121,18 +118,12 @@
         0 0 15px rgba(0,255,204,0.7),
         0 0 40px rgba(0,255,204,0.4);
       opacity: 0;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      z-index: 2;
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .evoz-btn.visible {
-      opacity: 1;
-      pointer-events: auto;
       animation:
         btnFadeIn 0.8s ease forwards,
         btnPulse 2.5s ease-in-out infinite;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 2;
+      user-select: none;
     }
 
     .evoz-btn:hover {
@@ -142,9 +133,9 @@
         0 0 80px rgba(0,255,204,0.9);
     }
 
-    #evoz-play.visible { animation-delay: 0.0s; }
-    #evoz-credits.visible { animation-delay: 0.3s; }
-    #evoz-howto.visible { animation-delay: 0.6s; }
+    #evoz-play { animation-delay: 1.1s; }
+    #evoz-credits { animation-delay: 1.3s; }
+    #evoz-howto { animation-delay: 1.5s; }
 
     @keyframes btnPulse {
       0%,100% { filter: brightness(1); }
@@ -251,7 +242,6 @@
   const title = document.createElement("div");
   title.id = "evoz-title";
   title.textContent = "EvoZ";
-  intro.appendChild(title);
 
   // Buttons
   const playBtn = document.createElement("button");
@@ -294,25 +284,16 @@ The idea is to survive, upgrade and become the EvoZ.
     <button class="evoz-btn" id="evoz-back-howto">BACK</button>
   `;
 
+  // Append all
+  intro.appendChild(title);
+  intro.appendChild(playBtn);
+  intro.appendChild(creditsBtn);
+  intro.appendChild(howtoBtn);
   intro.appendChild(creditsPanel);
   intro.appendChild(howtoPanel);
-
-  // Buttons container for easy fade in/out
-  const buttons = document.createElement("div");
-  buttons.style.display = "flex";
-  buttons.style.flexDirection = "column";
-  buttons.style.alignItems = "center";
-  buttons.style.justifyContent = "center";
-  buttons.style.zIndex = "2";
-  buttons.style.marginTop = "10px";
-  buttons.appendChild(playBtn);
-  buttons.appendChild(creditsBtn);
-  buttons.appendChild(howtoBtn);
-  intro.appendChild(buttons);
-
   document.body.appendChild(intro);
 
-  // ---------- Nebula + Stars animation setup ----------
+  // ---------- Nebula animation setup ----------
   const ctx = canvas.getContext("2d");
   let width, height;
 
@@ -325,61 +306,36 @@ The idea is to survive, upgrade and become the EvoZ.
   resize();
   window.addEventListener("resize", resize);
 
-  // Nebula blobs
   const blobs = [];
   const blobCount = 7;
 
-  for (let i = 0; i < blobCount; i++) {
+  for(let i = 0; i < blobCount; i++) {
     blobs.push({
       x: Math.random() * width,
       y: Math.random() * height,
       radius: 150 + Math.random() * 250,
       speedX: (Math.random() - 0.5) * 0.3,
       speedY: (Math.random() - 0.5) * 0.3,
-      color: `hsla(${Math.random() * 360}, 70%, 50%, 0.15)`,
+      color: `hsla(${Math.random() * 360}, 70%, 50%, 0.15)`
     });
   }
 
-  // Stars setup
-  const stars = [];
-  const starCount = 150;
-
-  for (let i = 0; i < starCount; i++) {
-    stars.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: Math.random() * 1.3 + 0.2,
-      twinkleSpeed: 0.002 + Math.random() * 0.006,
-      twinklePhase: Math.random() * Math.PI * 2,
-    });
-  }
-
-  // Animate stars and blobs
   let animationId;
-
-  function animate(time = 0) {
+  function animate() {
     ctx.clearRect(0, 0, width, height);
 
-    // Draw nebula blobs
-    blobs.forEach((blob) => {
+    blobs.forEach(blob => {
       blob.x += blob.speedX;
       blob.y += blob.speedY;
 
-      if (blob.x - blob.radius > width) blob.x = -blob.radius;
-      if (blob.x + blob.radius < 0) blob.x = width + blob.radius;
-      if (blob.y - blob.radius > height) blob.y = -blob.radius;
-      if (blob.y + blob.radius < 0) blob.y = height + blob.radius;
+      if(blob.x - blob.radius > width) blob.x = -blob.radius;
+      if(blob.x + blob.radius < 0) blob.x = width + blob.radius;
+      if(blob.y - blob.radius > height) blob.y = -blob.radius;
+      if(blob.y + blob.radius < 0) blob.y = height + blob.radius;
 
-      const grad = ctx.createRadialGradient(
-        blob.x,
-        blob.y,
-        0,
-        blob.x,
-        blob.y,
-        blob.radius
-      );
+      const grad = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.radius);
       grad.addColorStop(0, blob.color);
-      grad.addColorStop(1, "rgba(0,0,0,0)");
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
 
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -387,53 +343,15 @@ The idea is to survive, upgrade and become the EvoZ.
       ctx.fill();
     });
 
-    // Draw twinkling stars
-    stars.forEach((star) => {
-      star.twinklePhase += star.twinkleSpeed;
-      if (star.twinklePhase > Math.PI * 2) star.twinklePhase -= Math.PI * 2;
-      const alpha = 0.5 + 0.5 * Math.sin(star.twinklePhase);
-
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
-      ctx.fill();
-    });
-
     animationId = requestAnimationFrame(animate);
   }
-
   animate();
-
-  // ---------- Intro Sequence Logic ----------
-
-  // Hide buttons initially
-  buttons.querySelectorAll("button").forEach((btn) => {
-    btn.classList.remove("visible");
-    btn.style.pointerEvents = "none";
-  });
-  title.style.opacity = "0";
-
-  // After 2 seconds: animate title drop + fade in
-  setTimeout(() => {
-    title.style.animation = "titleDrop 1.2s cubic-bezier(0.2,0.8,0.2,1) forwards";
-  }, 2000);
-
-  // After 3.3 seconds: start neon pulse
-  setTimeout(() => {
-    title.style.animation += ", neonPulse 3s ease-in-out infinite";
-  }, 3200);
-
-  // After 4.5 seconds: fade buttons in sequentially with pulse and enable them
-  setTimeout(() => {
-    playBtn.classList.add("visible");
-    creditsBtn.classList.add("visible");
-    howtoBtn.classList.add("visible");
-  }, 4500);
 
   // ---------- Interaction ----------
 
   // Play button click
   playBtn.addEventListener("click", (e) => {
+    // Play burst effect
     const ring = document.createElement("div");
     ring.className = "energy-ring";
     ring.style.left = e.clientX + "px";
@@ -442,6 +360,7 @@ The idea is to survive, upgrade and become the EvoZ.
 
     intro.classList.add("fade-out");
 
+    // Stop animation after fade
     setTimeout(() => {
       cancelAnimationFrame(animationId);
       intro.remove();
@@ -465,4 +384,5 @@ The idea is to survive, upgrade and become the EvoZ.
   howtoPanel.querySelector("#evoz-back-howto").addEventListener("click", () => {
     howtoPanel.style.display = "none";
   });
+
 })();
