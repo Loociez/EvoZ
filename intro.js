@@ -247,7 +247,7 @@
     const creditsPanel = document.createElement("div");
     creditsPanel.id = "evoz-credits-panel";
     creditsPanel.innerHTML = `
-        <p>Beta 1: <strong>Under construction</strong></p>
+        <p>Beta 1.1: <strong>Under construction</strong></p>
         <p>Game created by <strong>Loocie</strong></p>
         <p>Music: <strong>N3x - Anything</strong></p>
         <button class="evoz-btn" id="evoz-back">BACK</button>
