@@ -27,7 +27,7 @@ const WORLD_HEIGHT = 1600; // total map height
 
 
 // ---------------- Player ----------------
-const player = {
+window.player = {
     x: canvas.width / 4,
     y: canvas.height / 4,
     size: 5,
@@ -52,7 +52,7 @@ const player = {
 };
 
 // ---------------- Enemies ----------------
-const enemies = [];
+window.enemies = [];
 const ELITE_CHANCE = 0.12;
 
 const eliteModifiers = [

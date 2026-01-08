@@ -96,6 +96,40 @@
         pointer-events: auto;
         font-size: 12px;
     }
+
+    /* ===== Achievements Container ===== */
+    #achievements-container {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        pointer-events: none;
+    }
+
+    .achievement-popup {
+        background: linear-gradient(135deg,#00ffcc,#00aa88);
+        color: #00131f;
+        padding: 12px 28px;
+        margin-top: 10px;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+        font-size: 20px;
+        text-shadow: 0 0 10px #00ffcc, 0 0 30px #00ffcc;
+        border-radius: 6px;
+        box-shadow: 0 0 10px #00ffcc, 0 0 30px #00ffcc;
+        opacity: 0;
+        transform: translateY(-50px);
+        animation: achievementShow 0.6s ease forwards, achievementHide 0.6s ease 2.4s forwards;
+    }
+
+    @keyframes achievementShow {
+        to { opacity: 1; transform: translateY(0) scale(1.05); }
+    }
+
+    @keyframes achievementHide {
+        to { opacity: 0; transform: translateY(-50px) scale(0.9); }
+    }
 </style>
 </head>
 
@@ -135,7 +169,6 @@ let bgMusic;
 let musicEnabled = true;
 let gameLoaded = false;
 
-// Function to initialize and play background music
 function startMusic() {
     if (!bgMusic) {
         bgMusic = new Audio("sounds/Anything.mp3");
@@ -147,7 +180,6 @@ function startMusic() {
     }
 }
 
-// Unlock audio on first user interaction (click or keypress)
 function unlockAudio() {
     startMusic();
     document.removeEventListener("click", unlockAudio);
@@ -157,14 +189,10 @@ document.addEventListener("click", unlockAudio);
 document.addEventListener("keydown", unlockAudio);
 
 document.addEventListener("evoz-start-game", () => {
-    // Show UI
     document.getElementById("ui").style.display = "block";
     document.getElementById("leaderboard").style.display = "block";
-
-    // Try to auto-play immediately
     startMusic();
 
-    // Load the game script only once
     if (!gameLoaded) {
         const script = document.createElement("script");
         script.type = "module";
@@ -192,6 +220,101 @@ btn.onclick = () => {
         }
     }
 };
+</script>
+
+<!-- ================= Achievements System ================= -->
+<script>
+(function() {
+    if (window.EvoZAchievements) return;
+    window.EvoZAchievements = true;
+
+    document.addEventListener("evoz-start-game", () => {
+
+        const achievements = [
+            { id: 'first_kill', name: 'First Blood', desc: 'Kill 1 enemy', condition: s => s.kills >= 1, unlocked: false },
+            { id: 'level10', name: 'Rising Star', desc: 'Reach Level 10', condition: s => s.level >= 10, unlocked: false },
+            { id: 'xp100', name: 'XP Collector', desc: 'Gain 100 XP', condition: s => s.totalXP >= 100, unlocked: false },
+            { id: 'xp1000', name: 'XP Collector 2', desc: 'Gain 1000 XP', condition: s => s.totalXP >= 1000, unlocked: false },
+            { id: 'xp10000', name: 'XP Collector 3', desc: 'Gain 10000 XP', condition: s => s.totalXP >= 10000, unlocked: false },
+            { id: 'kill50', name: 'Slayer', desc: 'Kill 50 enemies', condition: s => s.kills >= 50, unlocked: false },
+            { id: 'level50', name: 'Champion', desc: 'Reach Level 50', condition: s => s.level >= 50, unlocked: false },
+            { id: 'level50', name: 'King', desc: 'Reach Level 100', condition: s => s.level >= 100, unlocked: false }
+        ];
+
+        const stats = { kills: 0, combo: 0, maxCombo: 0, totalXP: 0, level: 1 };
+
+        // Create container
+        const container = document.createElement('div');
+        container.id = 'achievements-container';
+        document.body.appendChild(container);
+
+        // Show popup
+        function showAchievementPopup(name, desc) {
+            const div = document.createElement('div');
+            div.className = 'achievement-popup';
+            div.innerHTML = `<strong>${name}</strong>: ${desc}`;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function checkAchievements() {
+            achievements.forEach(a => {
+                if (!a.unlocked && a.condition(stats)) {
+                    a.unlocked = true;
+                    showAchievementPopup(a.name, a.desc);
+                }
+            });
+        }
+
+        // Wait for game.js to initialize module-scoped player and enemies
+        const waitForPlayer = setInterval(() => {
+            try {
+                if (window.player && window.enemies) {
+    clearInterval(waitForPlayer);
+
+    const playerRef = window.player;
+    const enemiesRef = window.enemies;
+
+    // Hook XP
+    let _xp = playerRef.xp;
+    Object.defineProperty(playerRef, 'xp', {
+        get() { return _xp; },
+        set(val) {
+            if (val > _xp) stats.totalXP += val - _xp;
+            _xp = val;
+            checkAchievements();
+        }
+    });
+
+    // Wrap enemies.splice to track kills
+    const originalSplice = enemiesRef.splice.bind(enemiesRef);
+    enemiesRef.splice = function(index, deleteCount, ...items) {
+        const removed = enemiesRef.slice(index, index + deleteCount);
+        removed.forEach(e => {
+            if (e.killedByPlayer) {
+                stats.kills++;
+                stats.combo++;
+                if (stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
+                stats.level = playerRef.level;
+                checkAchievements();
+            }
+        });
+        return originalSplice(index, deleteCount, ...items);
+    };
+
+
+                    // Reset combo if no kills for 1s
+                    setInterval(() => stats.combo = 0, 1000);
+
+                    window.EvoZAchievementsStats = stats;
+                }
+            } catch(e) {
+                // ignore errors until player/enemies exist
+            }
+        }, 50);
+
+    });
+})();
 </script>
 
 </body>
