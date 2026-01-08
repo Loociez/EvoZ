@@ -131,39 +131,67 @@
 
 <!-- ================= Game + Music Loader ================= -->
 <script>
-    let bgMusic;
-    let musicEnabled = true;
+let bgMusic;
+let musicEnabled = true;
+let gameLoaded = false;
 
-    document.addEventListener("evoz-start-game", () => {
-        // Show UI
-        document.getElementById("ui").style.display = "block";
-        document.getElementById("leaderboard").style.display = "block";
-
-        // Start background music (user interaction safe)
+// Function to initialize and play background music
+function startMusic() {
+    if (!bgMusic) {
         bgMusic = new Audio("Sounds/Anything.mp3");
         bgMusic.loop = true;
         bgMusic.volume = 0.5;
-        bgMusic.play();
+        bgMusic.play().catch(() => {
+            console.log("Autoplay blocked until user interaction.");
+        });
+    }
+}
 
-        // Music toggle button
-        const btn = document.getElementById("musicToggle");
-        btn.onclick = () => {
-            musicEnabled = !musicEnabled;
-            if (musicEnabled) {
-                bgMusic.play();
-                btn.textContent = "🔊 Music On";
-            } else {
-                bgMusic.pause();
-                btn.textContent = "🔇 Music Off";
-            }
-        };
+// Unlock audio on first user interaction (click or keypress)
+function unlockAudio() {
+    startMusic();
+    document.removeEventListener("click", unlockAudio);
+    document.removeEventListener("keydown", unlockAudio);
+}
+document.addEventListener("click", unlockAudio);
+document.addEventListener("keydown", unlockAudio);
 
-        // Load the game AFTER play
+document.addEventListener("evoz-start-game", () => {
+    // Show UI
+    document.getElementById("ui").style.display = "block";
+    document.getElementById("leaderboard").style.display = "block";
+
+    // Try to auto-play immediately
+    startMusic();
+
+    // Load the game script only once
+    if (!gameLoaded) {
         const script = document.createElement("script");
         script.type = "module";
         script.src = "game.js";
         document.body.appendChild(script);
-    });
+        gameLoaded = true;
+    }
+});
+
+// Music toggle button
+const btn = document.getElementById("musicToggle");
+btn.onclick = () => {
+    if (!bgMusic) {
+        startMusic();
+        musicEnabled = true;
+        btn.textContent = "🔊 Music On";
+    } else {
+        musicEnabled = !musicEnabled;
+        if (musicEnabled) {
+            bgMusic.play();
+            btn.textContent = "🔊 Music On";
+        } else {
+            bgMusic.pause();
+            btn.textContent = "🔇 Music Off";
+        }
+    }
+};
 </script>
 
 </body>
