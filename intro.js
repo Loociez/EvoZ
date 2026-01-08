@@ -150,6 +150,7 @@
 
         #evoz-play { animation-delay: 1.1s; }
         #evoz-credits { animation-delay: 1.3s; }
+        #evoz-howto { animation-delay: 1.5s; }
 
         @keyframes btnFadeIn {
             to { opacity: 1; }
@@ -191,7 +192,8 @@
         }
 
         /* ===== CREDITS ===== */
-        #evoz-credits-panel {
+        #evoz-credits-panel,
+        #evoz-howto-panel {
             position: absolute;
             inset: 0;
             background: rgba(0,10,20,0.95);
@@ -201,12 +203,30 @@
             justify-content: center;
             color: #00ffcc;
             font-size: 24px;
+            padding: 20px 40px;
+            text-align: center;
             z-index: 3;
+            overflow-y: auto;
         }
 
-        #evoz-credits-panel p {
+        #evoz-credits-panel p,
+        #evoz-howto-panel p {
             margin: 10px 0;
             text-shadow: 0 0 15px rgba(0,255,204,0.8);
+        }
+
+        #evoz-howto-panel pre {
+            white-space: pre-wrap;
+            font-family: monospace, monospace;
+            font-size: 20px;
+            margin-top: 20px;
+            text-shadow: 0 0 15px rgba(0,255,204,0.8);
+        }
+
+        #evoz-howto-panel button,
+        #evoz-credits-panel button {
+            margin-top: 30px;
+            align-self: center;
         }
 
         @keyframes introFadeIn {
@@ -244,6 +264,12 @@
     creditsBtn.className = "evoz-btn";
     creditsBtn.textContent = "CREDITS";
 
+    // New How To Play button
+    const howtoBtn = document.createElement("button");
+    howtoBtn.id = "evoz-howto";
+    howtoBtn.className = "evoz-btn";
+    howtoBtn.textContent = "HOW TO PLAY";
+
     const creditsPanel = document.createElement("div");
     creditsPanel.id = "evoz-credits-panel";
     creditsPanel.innerHTML = `
@@ -253,10 +279,27 @@
         <button class="evoz-btn" id="evoz-back">BACK</button>
     `;
 
+    // New How To Play panel
+    const howtoPanel = document.createElement("div");
+    howtoPanel.id = "evoz-howto-panel";
+    howtoPanel.innerHTML = `
+        <h2>How to Play</h2>
+        <pre>
+W - A - S - D to move.
+Spacebar or Left click to shoot.
+Numbers to level skills up.
+
+The idea is to survive, upgrade and become the EvoZ.
+        </pre>
+        <button class="evoz-btn" id="howto-back">BACK</button>
+    `;
+
     intro.appendChild(title);
     intro.appendChild(playBtn);
     intro.appendChild(creditsBtn);
+    intro.appendChild(howtoBtn);
     intro.appendChild(creditsPanel);
+    intro.appendChild(howtoPanel);
     document.body.appendChild(intro);
 
     // ---------- Interaction ----------
@@ -276,8 +319,16 @@
         creditsPanel.style.display = "flex";
     });
 
+    howtoBtn.addEventListener("click", () => {
+        howtoPanel.style.display = "flex";
+    });
+
     creditsPanel.querySelector("#evoz-back").addEventListener("click", () => {
         creditsPanel.style.display = "none";
+    });
+
+    howtoPanel.querySelector("#howto-back").addEventListener("click", () => {
+        howtoPanel.style.display = "none";
     });
 
 })();
