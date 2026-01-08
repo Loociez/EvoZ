@@ -140,7 +140,7 @@ function startMusic() {
     if (!bgMusic) {
         bgMusic = new Audio("sounds/Anything.mp3");
         bgMusic.loop = true;
-        bgMusic.volume = 1;
+        bgMusic.volume = 0.7;
         bgMusic.play().catch(() => {
             console.log("Autoplay blocked until user interaction.");
         });
