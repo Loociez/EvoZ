@@ -25,6 +25,10 @@ canvas.height = window.innerHeight;
 const WORLD_WIDTH = 1600;  // total map width
 const WORLD_HEIGHT = 1600; // total map height
 
+// ================== Delta Time ==================
+let lastFrameTime = performance.now();
+
+
 
 // ---------------- Player ----------------
 window.player = {
@@ -85,6 +89,12 @@ const skillsList = [
 
 // ---------------- Game Variables ----------------
 let keys = {};
+let inputLocked = false;
+
+function resetInput(){
+    keys = {};
+}
+
 let gameOver = false;
 const explosions = [];
 const heals = [];
@@ -158,6 +168,7 @@ generateBackground();
 
 // ---------------- Event Listeners ----------------
 document.addEventListener('keydown', e => {
+    if(inputLocked) return;
     keys[e.key] = true;
     // Skill shortcuts 1-6
     if(!gameOver){
@@ -172,7 +183,11 @@ document.addEventListener('keydown', e => {
             }
         }
     }
-    if(gameOver && e.key.toLowerCase() === 'r') restartGame();
+    if(gameOver && e.key.toLowerCase() === 'r'){
+        inputLocked = true;
+        restartGame();
+        setTimeout(()=> inputLocked = false, 50);
+    }
 });
 document.addEventListener('keyup', e => keys[e.key] = false);
 
@@ -671,6 +686,7 @@ function endGame(){
 }
 
 function restartGame(){
+    resetInput();
     player.size = 5;
     player.actualSize = 5;
     player.xp = 0;
@@ -723,3 +739,6 @@ function spawnBoss(){
         shootRate: 1200
     };
 }
+// Clear input on focus loss
+window.addEventListener('blur', resetInput);
+document.addEventListener('visibilitychange', () => { if(document.hidden) resetInput(); });
